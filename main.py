@@ -7,16 +7,14 @@ from discord.ext import commands
 
 mayavi = commands.Bot(command_prefix="/",intents=discord.Intents.all())
 
-
-
-
 #Wlwcom message
 @mayavi.event
 async def on_member_join(member):
     welcome_channel = mayavi.get_channel(1236717191408386098)
-    message = f"Welcome to the server {member.name}"
+    dm_message = f"Dear {member.name},\n Welcome to our community!\n Feel free to explore, engage, and have fun. If you need any help, just ask! We're glad you're here.\n \n Best regards,\n Mayavi"
+    message = f"Welcome to the community {member.name} !!"
     await welcome_channel.send(message)
-    await member.send(message)
+    await member.send(dm_message)
 
 
 #sql setup
@@ -89,7 +87,7 @@ async def user_status2(ctx, user: discord.User):
 
 
 
-#for role selection
+#for  selection options
 class  RoleSelection(discord.ui.Select):
     def __init__(self):
         options=[
@@ -98,49 +96,35 @@ class  RoleSelection(discord.ui.Select):
                 discord.SelectOption(label="Student",description="student"),  
                 discord.SelectOption(label="Enabler",description="Enabler"),  
         ]
-
-        
-
-
         super().__init__(placeholder="Select your Role : ",options=options,min_values=1,max_values=1)
 
 
 
-
+#role selction aand updation
+        
     async def callback(self,interaction: discord.Interaction):
 
         await interaction.response.send_message(f"You have choosed your role as '{self.values[0]}'")
 
         async def Adddatatodb(ctx, user: discord.User, selected_role: str):
-                
-                
-                
-                query = f"SELECT discord_id FROM user_role;"
+                               
+                query = f"SELECT discord_id FROM user_role WHERE discord_id = '{user.id}';"
                 result = fetch_data(query)
-                for row in result:
-                    print("just printing : ",row)
-                    if(row[0] == user.id):
-                        print(row)
-                        query = "UPDATE user_role SET role = '{self.values[0]}' WHERE user_id = '{user.id}';"
-                        fetch_data(query)
+            
+                
+                if result:
+                        update_query = f"UPDATE user_role SET role = '{self.values[0]}' WHERE discord_id = '{user.id}';"
+                        fetch_data(update_query)
 
-                    
-                  
-                 
-               # query = f"""INSERT INTO user_role (discord_id,role) VALUES(
-               # '{user.id}',
-               # '{self.values[0]}');"""
-               # fetch_data(query)
+                else:
+                    insert_query = f"""INSERT INTO user_role (discord_id, role) VALUES ('{user.id}', '{self.values[0]}');"""
+                    fetch_data(insert_query)
+                    await ctx.send("Role added successfully!")
           
 
         await Adddatatodb(interaction, interaction.user, {self.values[0]})
 
     
-        
-
-                               
-
-
 class RoleSelectionView(discord.ui.View):
     def __init__(self):
         super().__init__()
@@ -152,14 +136,6 @@ class RoleSelectionView(discord.ui.View):
 async def role(ctx: commands.Context):
     await ctx.response.send_message("click the dropdown below to select your option",view=RoleSelectionView())
     
-
-
-
-  
-# Update the role of the user in the database
-        
-
-
 
 mayavi.run(decouple.config("TOKEN"))
 
